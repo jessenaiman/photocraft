@@ -38,6 +38,7 @@ pub mod cjk_fonts;
 pub mod color_picker_ui;
 pub mod color_range_ui;
 pub mod comps_ui;
+pub mod contextual_bar;
 pub mod control;
 pub mod crop_ui;
 pub mod dialogs;
@@ -949,6 +950,7 @@ impl eframe::App for PhotocraftApp {
         egui::CentralPanel::default().frame(egui::Frame::NONE.fill(backdrop)).show(ui, |ui| {
             canvas::document_area(self, ui);
         });
+        contextual_bar::show(self, &ctx);
         panels::properties_window(self, &ctx);
         brush_panel::window(self, &ctx);
         preset_panels::windows(self, &ctx);

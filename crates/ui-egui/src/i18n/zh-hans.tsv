@@ -2076,3 +2076,23 @@ cameraRaw	Blending	混合
 	Details	详细信息
 	Rendering mode	渲染模式
 	Edit Type	编辑文字
+	Contextual Task Bar	上下文任务栏
+	Create mask from selection	从选区创建蒙版
+	Create new adjustment layer	创建新的调整图层
+	Describe what to generate in the selection.	描述要在选区中生成的内容。
+	Drag to move the bar	拖动以移动此栏
+	Fill selection	填充选区
+	Generative Fill	生成式填充
+	Generative fill settings	生成式填充设置
+	Get a fal.ai key	获取 fal.ai 密钥
+	Hide bar	隐藏此栏
+	Invert selection	反选
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	修改现有内容、扩展图像，并生成对象、背景和场景。
+	Modify selection	修改选区
+	More options	更多选项
+	Pin bar position	固定此栏位置
+	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	移除选中的像素。有 fal.ai 密钥时，先用 SAM 3 分割对象。
+	Reset bar position	重置此栏位置
+	Unpin bar position	取消固定此栏
+	fal.ai API key	fal.ai API 密钥
+	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	fal.ai API 密钥用于生成式填充，并在移除前找出选区中的对象。密钥只保存在这台电脑上。

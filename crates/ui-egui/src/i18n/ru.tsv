@@ -2344,3 +2344,23 @@ cameraRaw	Roughness	Неровность
 	Patch:	Заплатка:
 	Lasso around an area, then drag the selection	Обведите область лассо, затем перетащите выделение
 	Edit Type	Редактировать текст
+	Contextual Task Bar	Контекстная панель задач
+	Create mask from selection	Создать маску из выделения
+	Create new adjustment layer	Создать новый корректирующий слой
+	Describe what to generate in the selection.	Опишите, что создать в выделении.
+	Drag to move the bar	Перетащите, чтобы переместить панель
+	Fill selection	Залить выделение
+	Generative Fill	Генеративная заливка
+	Generative fill settings	Настройки генеративной заливки
+	Get a fal.ai key	Получить ключ fal.ai
+	Hide bar	Скрыть панель
+	Invert selection	Инвертировать выделение
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	Меняйте существующее, расширяйте изображение и создавайте объекты, фоны и сцены.
+	Modify selection	Изменить выделение
+	More options	Другие параметры
+	Pin bar position	Закрепить положение панели
+	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	Удаляет выделенные пиксели. С ключом fal.ai SAM 3 сначала выделяет объект.
+	Reset bar position	Сбросить положение панели
+	Unpin bar position	Открепить панель
+	fal.ai API key	Ключ API fal.ai
+	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	Ключ API fal.ai нужен для генеративной заливки и чтобы найти объект в выделении перед удалением. Ключ хранится только на этом компьютере.

@@ -2045,3 +2045,23 @@ cameraRaw	Blending	混合
 	Patch:	修補：
 	Lasso around an area, then drag the selection	用套索圈出區域，然後拖曳選取範圍
 	Edit Type	編輯文字
+	Contextual Task Bar	相關工作列
+	Create mask from selection	從選取範圍建立遮色片
+	Create new adjustment layer	建立新調整圖層
+	Describe what to generate in the selection.	描述要在選取範圍中生成的內容。
+	Drag to move the bar	拖曳以移動此列
+	Fill selection	填滿選取範圍
+	Generative Fill	生成填色
+	Generative fill settings	生成填色設定
+	Get a fal.ai key	取得 fal.ai 金鑰
+	Hide bar	隱藏此列
+	Invert selection	反向選取
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	修改現有內容、延伸影像，並產生物件、背景與場景。
+	Modify selection	修改選取範圍
+	More options	更多選項
+	Pin bar position	釘選此列位置
+	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	移除選取的像素。有 fal.ai 金鑰時，先用 SAM 3 分割物件。
+	Reset bar position	重設此列位置
+	Unpin bar position	取消釘選此列
+	fal.ai API key	fal.ai API 金鑰
+	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	fal.ai API 金鑰用於生成填色，並在移除前找出選取範圍中的物件。金鑰只保存在這台電腦上。

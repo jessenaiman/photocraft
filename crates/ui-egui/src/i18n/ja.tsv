@@ -2050,3 +2050,23 @@ cameraRaw	Color	カラー
 	Patch:	パッチ:
 	Lasso around an area, then drag the selection	投げ縄で範囲を囲み、選択範囲をドラッグします
 	Edit Type	文字を編集
+	Contextual Task Bar	コンテキストタスクバー
+	Create mask from selection	選択範囲からマスクを作成
+	Create new adjustment layer	新規調整レイヤーを作成
+	Describe what to generate in the selection.	選択範囲に生成する内容を書いてください。
+	Drag to move the bar	ドラッグしてバーを移動
+	Fill selection	選択範囲を塗りつぶす
+	Generative Fill	生成塗りつぶし
+	Generative fill settings	生成塗りつぶしの設定
+	Get a fal.ai key	fal.ai のキーを取得
+	Hide bar	バーを隠す
+	Invert selection	選択範囲を反転
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	既存の内容を変え、画像を広げ、オブジェクト・背景・場面を生成します。
+	Modify selection	選択範囲を修正
+	More options	その他のオプション
+	Pin bar position	バーの位置を固定
+	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	選択したピクセルを消します。fal.ai のキーがあると、先に SAM 3 でオブジェクトを切り出します。
+	Reset bar position	バーの位置をリセット
+	Unpin bar position	バーの固定を解除
+	fal.ai API key	fal.ai API キー
+	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	fal.ai の API キーは、生成塗りつぶしと、削除の前に選択範囲内のオブジェクトを見つけるために使います。キーはこのコンピューターだけに保存されます。

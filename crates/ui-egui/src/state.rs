@@ -283,6 +283,9 @@ pub struct Panels {
     /// Window › Character / Paragraph: the Character | Paragraph dock group (#150).
     #[serde(default)]
     pub character: bool,
+    /// Window › Contextual Task Bar. Shown under a selection.
+    #[serde(default = "yes")]
+    pub contextual_bar: bool,
 }
 
 impl Default for Panels {
@@ -298,6 +301,7 @@ impl Default for Panels {
             status_bar: true,
             brush_settings: false,
             character: false,
+            contextual_bar: true,
         }
     }
 }
@@ -730,6 +734,9 @@ pub struct UiState {
     pub chrome: crate::chrome_ui::ChromeState,
     #[serde(default)]
     pub camera_raw_scope: CameraRawScopeState,
+    /// Selection contextual task bar: pin, drag offset, and the open popover.
+    #[serde(default)]
+    pub contextual: crate::contextual_bar::BarState,
 }
 
 impl Default for UiState {
@@ -785,6 +792,7 @@ impl Default for UiState {
             gpu_fallback_notice: None,
             chrome: Default::default(),
             camera_raw_scope: Default::default(),
+            contextual: Default::default(),
         }
     }
 }
