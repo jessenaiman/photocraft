@@ -91,7 +91,27 @@ pub const UI_SET_FIELDS: [&str; 18] = [
     "gradientClassic",
 ];
 
-fn ok(v: Value) -> Outcome {
+// Keep legacy stored preferences untouched, but never expose credential fields to agents.
+fn redact_credentials(v: &mut Value) {
+    match v {
+        Value::Object(fields) => {
+            fields.remove("contextual.generative");
+            fields.remove("apiKey");
+            for value in fields.values_mut() {
+                redact_credentials(value);
+            }
+        }
+        Value::Array(items) => {
+            for value in items {
+                redact_credentials(value);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn ok(mut v: Value) -> Outcome {
+    redact_credentials(&mut v);
     Outcome::Done(json!({"ok": true, "result": v}))
 }
 fn err(e: impl std::fmt::Display) -> Outcome {
@@ -139,6 +159,46 @@ pub fn handle(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest
     let u = |k: &str| p.get(k).and_then(Value::as_u64);
     let wait = p.get("wait").and_then(Value::as_bool).unwrap_or(true);
     match req.method.as_str() {
+        "generative.inspect" | "generative.cancel" | "generative.start" | "generative.variation" => {
+            let allowed: &[&str] = match req.method.as_str() {
+                "generative.start" => &["prompt"],
+                "generative.variation" => &["index"],
+                _ => &[],
+            };
+            let Some(fields) = p.as_object() else { return err("generative params must be an object") };
+            if let Some(field) = fields.keys().find(|k| !allowed.contains(&k.as_str())) {
+                return err(format!("unsupported generative parameter `{field}`"));
+            }
+            match req.method.as_str() {
+                "generative.inspect" => ok(crate::generative::inspect(app)),
+                "generative.cancel" => {
+                    crate::generative::cancel(app);
+                    ok(crate::generative::inspect(app))
+                }
+                "generative.start" => {
+                    let Some(prompt) = s("prompt") else { return err("generative.start requires a string prompt") };
+                    match crate::generative::start(app, prompt) {
+                        Ok(()) => {
+                            app.ui.status = "Generating…".into();
+                            app.ui.status_error = false;
+                            ok(crate::generative::inspect(app))
+                        }
+                        Err(e) => {
+                            app.ui.status = e.clone();
+                            app.ui.status_error = true;
+                            err(e)
+                        }
+                    }
+                }
+                _ => {
+                    let Some(index) = u("index").and_then(|n| usize::try_from(n).ok()) else { return err("variation index must be a nonnegative integer") };
+                    match crate::generative::show_variation(app, index) {
+                        Ok(()) => ok(crate::generative::inspect(app)),
+                        Err(e) => err(e),
+                    }
+                }
+            }
+        }
         "ui.context.choose" => {
             let Some(id) = s("id") else { return err("missing `id`") };
             let Some(menu) = app.ui.canvas_tool_menu.as_ref() else { return err("no canvas context menu is open") };
@@ -161,6 +221,11 @@ pub fn handle(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest
         "engine.execute" | "ui.menu.invoke" => {
             let Some(id) = s("command").or(s("id")) else { return err("missing `command`") };
             let params = p.get("params").cloned().unwrap_or(json!({}));
+            if id == "prefs.get"
+                && params.get("path").and_then(Value::as_str).is_some_and(|path| path.contains("contextual.generative") || path.contains("apiKey"))
+            {
+                return err("Legacy credential preferences are not exposed; generative.inspect reports keyConfigured only.");
+            }
             if let Some(authorize) = app.services.automation_command.as_ref()
                 && let Err(error) = authorize(id, &params)
             {

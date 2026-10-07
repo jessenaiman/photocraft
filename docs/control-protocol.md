@@ -90,6 +90,26 @@ editing session; non-type layers return an error without changing the tool or do
 
 Long commands (every `filter.*`, `edit.contentAwareFill`, `edit.contentAwareScale`, `file.automate.photomerge`, `brush.presets.importAbr`) and file opens run as background jobs in the desktop app: the window keeps drawing, the status bar shows progress with a Cancel button, and jobs that lock the active document show a modal progress dialog (Esc cancels). `engine.execute`, `ui.menu.invoke` and `ui.dialog.confirm` still wait for the result by default; pass `"wait": false` to get `{job, pending: true}` at once, then poll `jobs.list` (`state`: running, done, failed, cancelled; `progress` 0–1; the result or error) and stop it with `jobs.cancel {job}`. A cancelled or failed job leaves the document unchanged. While a job runs, commands that would edit its document fail with "… is still running on this document". `ui.inspect` reports `jobs` (running jobs, opening files). Set `PHOTOCRAFT_INLINE_JOBS=1` to run everything inline.
 
+## Native Generative Fill
+
+The existing contextual task bar and these methods use the same fill, cancel and variation functions. Available on the desktop control channel, MCP `control_call`, and the CLI `control` subcommand:
+
+- `generative.inspect {}`: read-only busy/readiness, local prompt limit (2000 Unicode scalar values), native provider capability and `keyConfigured` booleans, actual result/choice counts, reference capability and actionable errors. No keys or encoded image payloads are returned. Selection readiness is basic; start also checks crop, size and mask budgets.
+- `generative.start {"prompt":"..."}`: validates the current document/selection and starts one background fal FLUX Fill request. One generated variation, plus original choice index 0. This uploads the composite crop and selection mask and may incur charges; no automatic paid retry. Unsupported fields (including multi-reference/count parameters) are rejected.
+- `generative.cancel {}`: discards a pending result using the same UI cancel path; an already dispatched remote call may still finish and be billed. Inspect sets `providerRequestMayStillCompleteOrCharge` after a local discard; this is conservative session history, not remote cancellation confirmation. `automaticRetry` is false.
+- `generative.variation {"index":0}`: selects original 0 or a returned result 1..N. No results, negative/noninteger/out-of-range indices return errors.
+
+Credentials live in a memory-only app field or optional `FAL_KEY` environment variable. UI-entered keys are not saved to preferences; legacy `contextual.generative` preferences are preserved unchanged but ignored for generation and redacted from desktop agent responses. Environment keys remain configured until removed from the launch environment. Provider execution is unverified without real credentials.
+
+`diagnostics` includes typed code `wayland-native-file-drop`, affected feature `native file drag-and-drop`, and an `active` boolean based on the actual native backend. The supported fallbacks are File > Open and `app.open` relative to the automation read root. This is not a general Wayland-unsupported claim.
+
+```sh
+photocraft-cli control generative.inspect --bridge 127.0.0.1:7878 --control-token-file /private/path/photocraft-control.token
+photocraft-cli control generative.variation --bridge 127.0.0.1:7878 --control-token-file /private/path/photocraft-control.token --params '{"index":0}'
+```
+
+MCP uses `control_call {"method":"generative.inspect","params":{}}` on the same authenticated bridge. These methods are not a headless generation provider or a separate chat framework. Reference support is **one current composite plus a selection mask**, not independent multi-reference imagery.
+
 ## Preferences
 
 Preferences (Edit › Preferences, grouped like Photoshop's dialog sections) live in the engine, so

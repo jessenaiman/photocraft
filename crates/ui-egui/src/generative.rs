@@ -1,7 +1,7 @@
 //! Generative Fill through the user's fal.ai key.
 //!
-//! The selection and a crop of the composite are sent to FLUX.1 Fill. Two results come back.
-//! The bar's first choice is the original selection; the next two are those results, on one
+//! The selection and a crop of the composite are sent to FLUX.1 Fill. One result comes back.
+//! The bar's first choice is the original selection; the next is that result, on one
 //! layer that is hidden while the original is showing. Remove does not use this path.
 
 use std::sync::mpsc::{Receiver, TryRecvError};
@@ -21,7 +21,7 @@ const ENDPOINT: &str = "https://fal.run/fal-ai/flux-pro/v1/fill";
 const PAD: i32 = 48;
 const MAX_SIDE: u32 = 1536;
 const MAX_PIXELS: u64 = 8_000_000;
-const MAX_PROMPT: usize = 2_000;
+pub(crate) const MAX_PROMPT: usize = 2_000;
 const MAX_BODY: usize = 18_000_000;
 
 /// A request that has been sent and is waiting for the images.
@@ -103,6 +103,39 @@ fn prepare(doc: &Document, selection: &Surface, prompt: &str) -> Result<Prepared
     })
 }
 
+/// Read-only local readiness. No credential values, image payloads or provider requests.
+pub(crate) fn inspect(app: &PhotocraftApp) -> Value {
+    let native = cfg!(not(target_arch = "wasm32"));
+    let key_configured = !crate::contextual_bar::api_key(app).is_empty();
+    let bounds = app.session.active().and_then(|st| st.doc.selection.as_ref()).map(photocraft_compose::bounds::content_bounds);
+    let selection_ready = bounds.is_some_and(|b| !b.is_empty());
+    let (index, total) = variation_state(app).unwrap_or((0, 0));
+    let mut errors = Vec::<String>::new();
+    if !native {
+        errors.push("Generative Fill requires the native desktop app.".into());
+    }
+    if app.session.active().is_none() {
+        errors.push("Open or create a document, then select the fill region.".into());
+    } else if !selection_ready {
+        errors.push("Select a nonempty region with a selection tool.".into());
+    }
+    if !key_configured {
+        errors.push("Set a session-only key in Generative Fill settings or launch with FAL_KEY; no provider request is made without it.".into());
+    }
+    if app.ui.status_error {
+        errors.push(app.ui.status.clone());
+    }
+    json!({"busy": app.generative.is_some(), "promptLimit": {"maximum": MAX_PROMPT, "unit": "Unicode scalar values", "authority": "local app validation"},
+        "selectionReady": selection_ready, "provider": "fal-ai/flux-pro/v1/fill", "providerConfigured": native,
+        "keyConfigured": key_configured, "referenceCapability": {"kind": "single-composite-plus-selection-mask", "multiReference": false},
+        "defaultVariations": 1, "requestedVariations": if app.generative.is_some() { 1 } else { 0 },
+        "providerRequestMayStillCompleteOrCharge": app.generative_discarded_request, "automaticRetry": false, "generatedVariations": total.saturating_sub(1), "totalChoices": total,
+        "variationIndex": index, "ready": native && selection_ready && key_configured && app.generative.is_none(), "errors": errors,
+        "diagnostics": [{"code": "wayland-native-file-drop", "affectedFeature": "native file drag-and-drop", "active": app.services.is_wayland,
+            "message": "Native file drag-and-drop is unavailable on Wayland; other app features are not declared unsupported.",
+            "fallbacks": ["File > Open", "app.open {path} relative to automation read root"]}]})
+}
+
 /// Start a fill. In tests the request is recorded and nothing is sent.
 pub(crate) fn start(app: &mut PhotocraftApp, prompt: &str) -> Result<(), String> {
     if app.generative.is_some() {
@@ -113,6 +146,9 @@ pub(crate) fn start(app: &mut PhotocraftApp, prompt: &str) -> Result<(), String>
         let selection = st.doc.selection.clone().ok_or_else(|| "no selection".to_string())?;
         prepare(&st.doc, &selection, prompt)?
     };
+    if crate::contextual_bar::api_key(app).is_empty() {
+        return Err("Add a session-only fal.ai key in Generative Fill settings, or launch with FAL_KEY. No request sent.".into());
+    }
     launch(app, prepared)
 }
 
@@ -142,8 +178,10 @@ pub(crate) fn variation_state(app: &PhotocraftApp) -> Option<(usize, usize)> {
 
 /// Show the original (`0`) or a generated image (`1..`).
 pub(crate) fn show_variation(app: &mut PhotocraftApp, index: usize) -> Result<(), String> {
-    let Some(v) = app.variations.as_ref() else { return Ok(()) };
-    let index = index.min(v.images.len());
+    let Some(v) = app.variations.as_ref() else { return Err("No generated variations; generate a selection first.".into()) };
+    if index > v.images.len() {
+        return Err("Variation index is outside the available results; inspect the variation count.".into());
+    }
     if index == v.index && (index == 0 || v.layer.is_some()) {
         return Ok(());
     }
@@ -151,7 +189,7 @@ pub(crate) fn show_variation(app: &mut PhotocraftApp, index: usize) -> Result<()
     let crop = v.crop;
     let selection = v.selection.clone();
     let existing = v.layer;
-    let png = (index > 0).then(|| v.images[index - 1].clone());
+    let png = index.checked_sub(1).and_then(|i| v.images.get(i)).cloned();
     let layer_id = if let Some(png) = png {
         let surface = masked_surface(app, &png, doc_id, crop, &selection)?;
         app.session
@@ -223,7 +261,7 @@ pub(crate) fn loading(app: &mut PhotocraftApp, ctx: &egui::Context) {
     let t = crate::theme::Tokens::get(ctx);
     let mut cancel_it = ctx.input(|i| i.key_pressed(egui::Key::Escape));
     let tip = if (started.elapsed().as_secs() / 6).is_multiple_of(2) {
-        tl!("The first image is your original. The next two are new versions of the selection.")
+        tl!("The first image is your original. The next is one generated version of the selection.")
     } else {
         tl!("The arrows on the bar move between the original and each generated image.")
     };
@@ -262,9 +300,11 @@ fn progress_bar(ui: &egui::Ui, rect: egui::Rect, frac: f32, t: &crate::theme::To
     ui.painter().rect_filled(egui::Rect::from_min_size(rect.min, egui::vec2(w.min(rect.width()), rect.height())), radius, t.accent);
 }
 
-fn cancel(app: &mut PhotocraftApp) {
-    app.generative = None;
-    app.ui.status = "Generative Fill was cancelled.".into();
+pub(crate) fn cancel(app: &mut PhotocraftApp) {
+    if app.generative.take().is_some() {
+        app.generative_discarded_request = true;
+    }
+    app.ui.status = "Local Generative Fill result discarded. A dispatched provider request may still complete or charge; no automatic retry.".into();
     app.ui.status_error = false;
 }
 
@@ -317,7 +357,9 @@ fn launch(app: &mut PhotocraftApp, prepared: Prepared) -> Result<(), String> {
         std::thread::Builder::new()
             .name("generative-fill".into())
             .spawn(move || {
-                let _ = tx.send(post(&key, &body).map_err(|e| hide_key(e, &key)));
+                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| post(&key, &body)))
+                    .unwrap_or_else(|_| Err("Generative Fill worker stopped unexpectedly.".into()));
+                let _ = tx.send(result.map_err(|e| hide_key(e, &key)));
             })
             .map_err(|_| "could not start Generative Fill".to_string())?;
         app.generative = Some(Pending { rx, doc: prepared.doc, crop: prepared.crop, selection: prepared.selection, started: Instant::now() });
@@ -537,6 +579,7 @@ fn trusted_https(url: &str) -> bool {
 }
 
 /// Two one-image requests. Different seeds so the results are not the same picture.
+#[cfg(test)]
 fn request_pair(body: &Value, seed: u64) -> [Value; 2] {
     let mut first = body.clone();
     let mut second = body.clone();
@@ -560,29 +603,10 @@ fn hide_key(message: String, key: &str) -> String {
 
 #[cfg(all(not(test), not(target_arch = "wasm32")))]
 fn post(key: &str, body: &Value) -> Result<Vec<Vec<u8>>, String> {
-    // One call returns one image. Two calls with different seeds give the two variations.
-    let [first, second] = request_pair(body, fresh_seed());
-    let key_a = key.to_string();
-    let key_b = key.to_string();
-    let left = std::thread::Builder::new()
-        .name("generative-fill-a".into())
-        .spawn(move || post_one(&key_a, &first))
-        .map_err(|_| "could not start Generative Fill".to_string())?;
-    let right = std::thread::Builder::new()
-        .name("generative-fill-b".into())
-        .spawn(move || post_one(&key_b, &second))
-        .map_err(|_| "could not start Generative Fill".to_string())?;
-    let a = join_image(left)?;
-    let b = join_image(right)?;
-    Ok(vec![a, b])
-}
-
-#[cfg(all(not(test), not(target_arch = "wasm32")))]
-fn join_image(handle: std::thread::JoinHandle<Result<Vec<u8>, String>>) -> Result<Vec<u8>, String> {
-    match handle.join() {
-        Ok(result) => result,
-        Err(_) => Err("Generative Fill stopped before it returned an image.".into()),
-    }
+    // Exactly one request and one generated variation; no automatic paid retry.
+    let mut request = body.clone();
+    request["seed"] = json!(fresh_seed());
+    Ok(vec![post_one(key, &request)?])
 }
 
 #[cfg(all(not(test), not(target_arch = "wasm32")))]

@@ -395,6 +395,9 @@ pub struct PhotocraftApp {
     pub jobs: jobs_ui::JobsUi,
     /// In-flight Generative Fill call. Not saved with the workspace.
     pub(crate) generative: Option<generative::Pending>,
+    /// Session-only credential: never serialized into preferences or UI state.
+    pub(crate) fal_key: String,
+    pub(crate) generative_discarded_request: bool,
     /// Original plus the generated images for the current selection. Not saved.
     pub(crate) variations: Option<generative::Variations>,
     #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
@@ -474,6 +477,8 @@ impl PhotocraftApp {
             background_jobs: false,
             jobs: Default::default(),
             generative: None,
+            fal_key: String::new(),
+            generative_discarded_request: false,
             variations: None,
             #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
             live_tokens: theme::live::LiveTokens::from_env(),

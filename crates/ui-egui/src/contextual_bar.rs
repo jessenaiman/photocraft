@@ -1,6 +1,6 @@
 //! The selection contextual task bar: the floating row under a marching-ants selection.
 //!
-//! Generative Fill sends the selection to fal.ai with the key saved on this computer.
+//! Generative Fill sends the selection to fal.ai with a session-only key or FAL_KEY.
 //! Remove uses the built-in content-aware fill and does not call out.
 
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, pos2, vec2};
@@ -10,11 +10,12 @@ use serde_json::{Value, json};
 use crate::PhotocraftApp;
 use crate::theme::Tokens;
 
+#[cfg(test)]
 const PREF: &str = "contextual.generative";
 const FAL_KEYS: &str = "https://fal.ai/dashboard/keys";
 const GAP: f32 = 8.0;
 
-/// Where the bar sits, and which popover is open. The API key is not here; it lives in preferences.
+/// Where the bar sits, and which popover is open. Credentials are never serialized.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct BarState {
@@ -47,27 +48,21 @@ enum Popover {
 }
 
 pub(crate) fn api_key(app: &PhotocraftApp) -> String {
-    app.session
-        .prefs()
-        .dialogs
-        .get(PREF)
-        .and_then(|v| v.get("apiKey"))
-        .and_then(|v| v.as_str())
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .unwrap_or("")
-        .to_string()
+    if !app.fal_key.trim().is_empty() {
+        return app.fal_key.trim().to_string();
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::env::var("FAL_KEY").unwrap_or_default().trim().to_string()
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        String::new()
+    }
 }
 
 fn save_api_key(app: &mut PhotocraftApp, key: &str) {
-    let key = key.trim();
-    app.session.prefs.edit(|p| {
-        if key.is_empty() {
-            p.dialogs.remove(PREF);
-        } else {
-            p.dialogs.insert(PREF.into(), json!({ "apiKey": key }));
-        }
-    });
+    app.fal_key = key.trim().to_string();
 }
 
 /// Top-left of the bar. Unpinned, it sits under the selection; pinned, it stays where it was put.
@@ -295,7 +290,7 @@ fn gear_pop(app: &mut PhotocraftApp, ui: &mut Ui) {
         ui.label(egui::RichText::new(tl!("Generative fill settings")).color(t.text));
         ui.add_space(4.0);
         #[rustfmt::skip]
-        let blurb = tl!("A fal.ai API key is used for Generative Fill. The key is stored only on this computer.");
+        let blurb = tl!("A fal.ai API key is used for Generative Fill. The key stays in memory for this session only; FAL_KEY is also supported.");
         ui.label(egui::RichText::new(blurb).size(12.0).color(t.text_dim));
         ui.add_space(8.0);
         let mut key = api_key(app);
