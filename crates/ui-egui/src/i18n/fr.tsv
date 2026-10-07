@@ -2497,3 +2497,30 @@ cameraRaw	Blending	Fusion
 	5 x 5	5 × 5
 	Grid:	Grille :
 	Edit Type	Modifier le texte
+
+# Contextual task bar
+	Contextual Task Bar	Barre de tâches contextuelle
+	Create mask from selection	Créer un masque à partir de la sélection
+	Create new adjustment layer	Créer un nouveau calque de réglage
+	Describe what to generate in the selection.	Décrivez ce qu'il faut générer dans la sélection.
+	Drag to move the bar	Faites glisser pour déplacer la barre
+	Fill selection	Remplir la sélection
+	Generative Fill	Remplissage génératif
+	Generative fill settings	Réglages du remplissage génératif
+	Get a fal.ai key	Obtenir une clé fal.ai
+	Hide bar	Masquer la barre
+	Invert selection	Inverser la sélection
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	Modifiez le contenu existant, étendez les images et générez des objets, des arrière-plans et des scènes.
+	Modify selection	Modifier la sélection
+	More options	Plus d'options
+	Pin bar position	Épingler la position de la barre
+	Removes the selected pixels with content-aware fill.	Supprime les pixels sélectionnés avec un remplissage selon le contenu.
+	Reset bar position	Réinitialiser la position de la barre
+	Unpin bar position	Désépingler la position de la barre
+	fal.ai API key	Clé API fal.ai
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Une clé API fal.ai sert au remplissage génératif. La clé n'est enregistrée que sur cet ordinateur.
+	Generating with Generative Fill	Génération avec le remplissage génératif
+	The first image is your original. The next two are new versions of the selection.	La première image est l'originale. Les deux suivantes sont de nouvelles versions de la sélection.
+	The arrows on the bar move between the original and each generated image.	Les flèches de la barre passent de l'image originale à chaque image générée.
+	Previous result	Résultat précédent
+	Next result	Résultat suivant

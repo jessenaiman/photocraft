@@ -2031,3 +2031,30 @@ cameraRaw	Color	색상
 	175%	175%
 	250%	250%
 	300%	300%
+
+# Contextual task bar
+	Contextual Task Bar	상황별 작업 막대
+	Create mask from selection	선택 영역에서 마스크 만들기
+	Create new adjustment layer	새 조정 레이어 만들기
+	Describe what to generate in the selection.	선택 영역에 생성할 내용을 설명하세요.
+	Drag to move the bar	드래그하여 막대 이동
+	Fill selection	선택 영역 칠
+	Generative Fill	생성형 칠
+	Generative fill settings	생성형 칠 설정
+	Get a fal.ai key	fal.ai 키 받기
+	Hide bar	막대 숨기기
+	Invert selection	선택 영역 반전
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	기존 내용을 수정하고, 이미지를 확장하고, 개체, 배경, 장면을 생성합니다.
+	Modify selection	선택 영역 수정
+	More options	기타 옵션
+	Pin bar position	막대 위치 고정
+	Removes the selected pixels with content-aware fill.	내용 인식 칠로 선택한 픽셀을 제거합니다.
+	Reset bar position	막대 위치 재설정
+	Unpin bar position	막대 위치 고정 해제
+	fal.ai API key	fal.ai API 키
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	fal.ai API 키는 생성형 칠에 사용됩니다. 키는 이 컴퓨터에만 저장됩니다.
+	Generating with Generative Fill	생성형 칠로 생성하는 중
+	The first image is your original. The next two are new versions of the selection.	첫 번째 이미지는 원본입니다. 다음 두 이미지는 선택 영역의 새 버전입니다.
+	The arrows on the bar move between the original and each generated image.	막대의 화살표로 원본과 생성된 각 이미지를 오갑니다.
+	Previous result	이전 결과
+	Next result	다음 결과
