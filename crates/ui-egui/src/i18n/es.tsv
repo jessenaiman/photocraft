@@ -2159,8 +2159,13 @@ cameraRaw	Amount	Cantidad
 	Modify selection	Modificar selección
 	More options	Más opciones
 	Pin bar position	Fijar la posición de la barra
-	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	Quita los píxeles seleccionados. Con una clave de fal.ai, SAM 3 segmenta el objeto primero.
+	Removes the selected pixels with content-aware fill.	Quita los píxeles seleccionados con relleno según el contenido.
 	Reset bar position	Restablecer la posición de la barra
 	Unpin bar position	Soltar la posición de la barra
 	fal.ai API key	Clave de API de fal.ai
-	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	Una clave de API de fal.ai se usa para el relleno generativo y para encontrar el objeto de la selección antes de quitarlo. La clave se guarda solo en este ordenador.
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Una clave de API de fal.ai se usa para el relleno generativo. La clave se guarda solo en este ordenador.
+	Generating with Generative Fill	Generando con relleno generativo
+	The first image is your original. The next two are new versions of the selection.	La primera imagen es la original. Las dos siguientes son versiones nuevas de la selección.
+	The arrows on the bar move between the original and each generated image.	Las flechas de la barra pasan de la imagen original a cada imagen generada.
+	Previous result	Resultado anterior
+	Next result	Resultado siguiente

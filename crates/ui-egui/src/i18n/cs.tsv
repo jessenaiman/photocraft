@@ -2082,8 +2082,13 @@ cameraRaw	Color	Barvy
 	Modify selection	Upravit výběr
 	More options	Další volby
 	Pin bar position	Připnout polohu panelu
-	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	Odstraní vybrané pixely. S klíčem fal.ai SAM 3 nejprve vyřízne objekt.
+	Removes the selected pixels with content-aware fill.	Odstraní vybrané pixely výplní podle obsahu.
 	Reset bar position	Obnovit polohu panelu
 	Unpin bar position	Odepnout panel
 	fal.ai API key	Klíč API fal.ai
-	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	Klíč API fal.ai slouží ke generativní výplni a k nalezení objektu ve výběru před odstraněním. Klíč zůstane jen v tomto počítači.
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Klíč API fal.ai slouží ke generativní výplni. Klíč zůstane jen v tomto počítači.
+	Generating with Generative Fill	Generování pomocí generativní výplně
+	The first image is your original. The next two are new versions of the selection.	První obrázek je původní. Další dva jsou nové verze výběru.
+	The arrows on the bar move between the original and each generated image.	Šipky na liště přepínají mezi původním obrázkem a každým vygenerovaným.
+	Previous result	Předchozí výsledek
+	Next result	Další výsledek

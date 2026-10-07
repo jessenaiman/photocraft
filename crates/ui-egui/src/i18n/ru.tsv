@@ -2359,8 +2359,13 @@ cameraRaw	Roughness	Неровность
 	Modify selection	Изменить выделение
 	More options	Другие параметры
 	Pin bar position	Закрепить положение панели
-	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	Удаляет выделенные пиксели. С ключом fal.ai SAM 3 сначала выделяет объект.
+	Removes the selected pixels with content-aware fill.	Удаляет выделенные пиксели с помощью заливки с учётом содержимого.
 	Reset bar position	Сбросить положение панели
 	Unpin bar position	Открепить панель
 	fal.ai API key	Ключ API fal.ai
-	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	Ключ API fal.ai нужен для генеративной заливки и чтобы найти объект в выделении перед удалением. Ключ хранится только на этом компьютере.
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Ключ API fal.ai нужен для генеративной заливки. Ключ хранится только на этом компьютере.
+	Generating with Generative Fill	Генерация с помощью генеративной заливки
+	The first image is your original. The next two are new versions of the selection.	Первое изображение — исходное. Два следующих — новые версии выделения.
+	The arrows on the bar move between the original and each generated image.	Стрелки на панели переключают исходное изображение и каждый сгенерированный вариант.
+	Previous result	Предыдущий результат
+	Next result	Следующий результат

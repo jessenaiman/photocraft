@@ -1,12 +1,9 @@
 //! The selection contextual task bar: the floating row under a marching-ants selection.
 //!
-//! Generative Fill keeps a gear beside it because the model is the user's. fal.ai is the key
-//! this bar asks for: one key runs SAM 3 (`https://fal.run/fal-ai/sam-3/image`), which segments
-//! the object inside the selection before Remove fills it, and the same key is what Generative
-//! Fill will send a prompt with. Remove still works with no key, through content-aware fill.
+//! Generative Fill sends the selection to fal.ai with the key saved on this computer.
+//! Remove uses the built-in content-aware fill and does not call out.
 
 use egui::{Color32, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, pos2, vec2};
-use photocraft_geom::Rect as DocRect;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -15,7 +12,6 @@ use crate::theme::Tokens;
 
 const PREF: &str = "contextual.generative";
 const FAL_KEYS: &str = "https://fal.ai/dashboard/keys";
-const SAM3_ENDPOINT: &str = "https://fal.run/fal-ai/sam-3/image";
 const GAP: f32 = 8.0;
 
 /// Where the bar sits, and which popover is open. The API key is not here; it lives in preferences.
@@ -50,48 +46,7 @@ enum Popover {
     More,
 }
 
-/// A SAM 3 image request. `body` is the JSON fal.ai expects; the API key is a header, never a field.
-struct Sam3Call {
-    endpoint: &'static str,
-    body: Value,
-}
-
-/// Box prompt for SAM 3, in document pixels, clamped to the image. `image_url` is filled in when
-/// the pixels are uploaded; this only checks that the selection is a real box.
-fn sam3_request(width: u32, height: u32, bounds: DocRect, image_url: &str) -> Result<Sam3Call, String> {
-    if width == 0 || height == 0 {
-        return Err("the image has no pixels".into());
-    }
-    if bounds.is_empty() {
-        return Err("the selection is empty".into());
-    }
-    if image_url.len() > 2_000_000 {
-        return Err("the image address is too long".into());
-    }
-    let max_x = i32::try_from(width).unwrap_or(i32::MAX);
-    let max_y = i32::try_from(height).unwrap_or(i32::MAX);
-    let x0 = bounds.x0.clamp(0, max_x);
-    let y0 = bounds.y0.clamp(0, max_y);
-    let x1 = bounds.x1.clamp(0, max_x);
-    let y1 = bounds.y1.clamp(0, max_y);
-    if x1 <= x0 || y1 <= y0 {
-        return Err("the selection is outside the image".into());
-    }
-    Ok(Sam3Call {
-        endpoint: SAM3_ENDPOINT,
-        body: json!({
-            "image_url": image_url,
-            "box_prompts": [{ "x_min": x0, "y_min": y0, "x_max": x1, "y_max": y1 }],
-            "apply_mask": false,
-            "sync_mode": true,
-            "output_format": "png",
-            "include_scores": true,
-            "return_multiple_masks": false
-        }),
-    })
-}
-
-fn api_key(app: &PhotocraftApp) -> String {
+pub(crate) fn api_key(app: &PhotocraftApp) -> String {
     app.session
         .prefs()
         .dialogs
@@ -113,17 +68,6 @@ fn save_api_key(app: &mut PhotocraftApp, key: &str) {
             p.dialogs.insert(PREF.into(), json!({ "apiKey": key }));
         }
     });
-}
-
-/// `Some` when a key is saved and the selection is a box SAM 3 can take. `None` when there is no key.
-fn sam_plan(app: &PhotocraftApp) -> Result<Option<Sam3Call>, String> {
-    if api_key(app).is_empty() {
-        return Ok(None);
-    }
-    let st = app.session.active().ok_or_else(|| "no document".to_string())?;
-    let sel = st.doc.selection.as_ref().ok_or_else(|| "no selection".to_string())?;
-    let bounds = photocraft_compose::bounds::content_bounds(sel);
-    sam3_request(st.doc.size.width, st.doc.size.height, bounds, "").map(Some)
 }
 
 /// Top-left of the bar. Unpinned, it sits under the selection; pinned, it stays where it was put.
@@ -158,6 +102,7 @@ fn showing(app: &PhotocraftApp) -> bool {
 
 /// Draw the bar when a selection is up. Clicks stay on the bar; the canvas is underneath.
 pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
+    crate::generative::sync_variations(app);
     if !showing(app) {
         return;
     }
@@ -224,7 +169,7 @@ fn row(app: &mut PhotocraftApp, ui: &mut Ui) {
         toggle(app, Popover::Gear);
     }
     ui.add_space(4.0);
-    if label_btn(ui, "bandage", tl!("Remove"), tl!("Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.")).clicked() {
+    if label_btn(ui, "bandage", tl!("Remove"), tl!("Removes the selected pixels with content-aware fill.")).clicked() {
         app.ui.contextual.pop = Popover::None;
         remove(app);
     }
@@ -234,14 +179,19 @@ fn row(app: &mut PhotocraftApp, ui: &mut Ui) {
     if icon_btn(ui, "arrow-left-right", tl!("Invert selection")).clicked() {
         let _ = run_cmd(app, "select.inverse", json!({}));
     }
-    if icon_btn(ui, "square-dashed", tl!("Create mask from selection")).clicked() {
-        let _ = run_cmd(app, "layer.layerMask.revealSelection", json!({}));
-    }
-    if icon_btn(ui, "paint-bucket", tl!("Fill selection")).clicked() {
-        let _ = run_cmd(app, "edit.fill", json!({ "contents": "foreground" }));
-    }
-    if icon_btn(ui, "contrast", tl!("Create new adjustment layer")).clicked() {
-        toggle(app, Popover::Adjust);
+    // Once results exist, those three icons move into More and the arrows take their place.
+    if crate::generative::variation_state(app).is_some() {
+        variation_pager(app, ui);
+    } else {
+        if icon_btn(ui, "square-dashed", tl!("Create mask from selection")).clicked() {
+            let _ = run_cmd(app, "layer.layerMask.revealSelection", json!({}));
+        }
+        if icon_btn(ui, "paint-bucket", tl!("Fill selection")).clicked() {
+            let _ = run_cmd(app, "edit.fill", json!({ "contents": "foreground" }));
+        }
+        if icon_btn(ui, "contrast", tl!("Create new adjustment layer")).clicked() {
+            toggle(app, Popover::Adjust);
+        }
     }
     if icon_btn(ui, "ellipsis", tl!("More options")).clicked() {
         toggle(app, Popover::More);
@@ -345,7 +295,7 @@ fn gear_pop(app: &mut PhotocraftApp, ui: &mut Ui) {
         ui.label(egui::RichText::new(tl!("Generative fill settings")).color(t.text));
         ui.add_space(4.0);
         #[rustfmt::skip]
-        let blurb = tl!("A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.");
+        let blurb = tl!("A fal.ai API key is used for Generative Fill. The key is stored only on this computer.");
         ui.label(egui::RichText::new(blurb).size(12.0).color(t.text_dim));
         ui.add_space(8.0);
         let mut key = api_key(app);
@@ -392,8 +342,63 @@ fn adjust_pop(app: &mut PhotocraftApp, ui: &mut Ui) {
     });
 }
 
+fn variation_pager(app: &mut PhotocraftApp, ui: &mut Ui) {
+    let Some((index, total)) = crate::generative::variation_state(app) else { return };
+    let t = Tokens::get(ui.ctx());
+    if pager_arrow(ui, true, index > 0, &t).clicked() && index > 0 {
+        step_variation(app, index - 1);
+    }
+    let label = format!("{}/{}", index + 1, total);
+    let galley = ui.painter().layout_no_wrap(label.clone(), egui::FontId::proportional(12.5), t.text);
+    let (rect, resp) = ui.allocate_exact_size(vec2(galley.size().x + 8.0, 28.0), Sense::hover());
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, label.clone()));
+    ui.painter().galley(pos2(rect.center().x - galley.size().x / 2.0, rect.center().y - galley.size().y / 2.0), galley, t.text);
+    if pager_arrow(ui, false, index + 1 < total, &t).clicked() && index + 1 < total {
+        step_variation(app, index + 1);
+    }
+}
+
+fn step_variation(app: &mut PhotocraftApp, index: usize) {
+    if let Err(e) = crate::generative::show_variation(app, index) {
+        app.ui.status = e;
+        app.ui.status_error = true;
+    }
+}
+
+fn pager_arrow(ui: &mut Ui, left: bool, enabled: bool, t: &Tokens) -> Response {
+    let tip = if left { tl!("Previous result") } else { tl!("Next result") };
+    let (rect, resp) = ui.allocate_exact_size(vec2(22.0, 28.0), Sense::click());
+    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, enabled, tip));
+    if enabled && resp.hovered() {
+        ui.painter().rect_filled(rect, t.radius_sm, t.hover);
+    }
+    let color = if enabled { t.text } else { t.text_faint };
+    let c = rect.center();
+    // Negative on the left button so the tip points outward, away from the count.
+    let dir = if left { -1.0 } else { 1.0 };
+    let point = pos2(c.x + dir * 3.5, c.y);
+    let wing = c.x - dir * 2.0;
+    let stroke = Stroke::new(1.6, color);
+    ui.painter().line_segment([pos2(wing, c.y - 4.0), point], stroke);
+    ui.painter().line_segment([point, pos2(wing, c.y + 4.0)], stroke);
+    let resp = resp.on_hover_text(tip);
+    if enabled { resp } else { resp.on_hover_cursor(egui::CursorIcon::Default) }
+}
+
 fn more_pop(app: &mut PhotocraftApp, ui: &mut Ui, origin: Pos2) {
     pop_frame(ui, |ui| {
+        if crate::generative::variation_state(app).is_some() {
+            if menu_btn(ui, tl!("Create mask from selection")) {
+                let _ = run_cmd(app, "layer.layerMask.revealSelection", json!({}));
+            }
+            if menu_btn(ui, tl!("Fill selection")) {
+                let _ = run_cmd(app, "edit.fill", json!({ "contents": "foreground" }));
+            }
+            if menu_btn(ui, tl!("Create new adjustment layer")) {
+                toggle(app, Popover::Adjust);
+            }
+            ui.add_space(4.0);
+        }
         if menu_btn(ui, tl!("Hide bar")) {
             app.ui.panels.contextual_bar = false;
             app.ui.contextual.pop = Popover::None;
@@ -423,36 +428,24 @@ fn generate(app: &mut PhotocraftApp) {
         app.ui.status_error = true;
         return;
     }
-    if app.ui.contextual.prompt.trim().is_empty() {
-        app.ui.status = "Describe what Generative Fill should create.".into();
-        app.ui.status_error = true;
-        return;
-    }
-    app.ui.status = "The fal.ai key is saved. Generative Fill will send this prompt once the image can be uploaded.".into();
-    app.ui.status_error = false;
-}
-
-fn remove(app: &mut PhotocraftApp) {
-    let sam = match sam_plan(app) {
-        Ok(Some(call)) => {
-            debug_assert_eq!(call.endpoint, SAM3_ENDPOINT);
-            debug_assert!(call.body.get("box_prompts").is_some());
-            true
+    let prompt = app.ui.contextual.prompt.clone();
+    match crate::generative::start(app, &prompt) {
+        Ok(()) => {
+            app.ui.contextual.pop = Popover::None;
+            app.ui.status = "Generating…".into();
+            app.ui.status_error = false;
         }
-        Ok(None) => false,
         Err(e) => {
             app.ui.status = e;
             app.ui.status_error = true;
-            return;
         }
-    };
+    }
+}
+
+fn remove(app: &mut PhotocraftApp) {
     match app.run("edit.contentAwareFill", json!({})) {
-        Ok(_) if sam => {
-            app.ui.status = "Removed with content-aware fill. SAM 3 will segment the object once the image can be sent to fal.ai.".into();
-            app.ui.status_error = false;
-        }
         Ok(_) => {
-            app.ui.status = "Removed with content-aware fill. Add a fal.ai key to segment the object with SAM 3 first.".into();
+            app.ui.status = "Removed the selection with content-aware fill.".into();
             app.ui.status_error = false;
         }
         Err(e) => {
@@ -506,36 +499,14 @@ mod tests {
     }
 
     #[test]
-    fn the_sam3_request_is_a_box_and_never_the_api_key() {
-        let call = sam3_request(200, 100, DocRect::new(-5, 10, 1000, 40), "https://example.invalid/a.png").unwrap();
-        assert_eq!(call.endpoint, "https://fal.run/fal-ai/sam-3/image");
-        assert_eq!(call.body["box_prompts"][0]["x_min"], 0);
-        assert_eq!(call.body["box_prompts"][0]["y_min"], 10);
-        assert_eq!(call.body["box_prompts"][0]["x_max"], 200);
-        assert_eq!(call.body["box_prompts"][0]["y_max"], 40);
-        assert_eq!(call.body["apply_mask"], false);
-        assert!(!call.body.to_string().contains("secret-key"));
-        assert!(sam3_request(10, 10, DocRect::EMPTY, "").is_err());
-        assert!(sam3_request(0, 10, DocRect::new(0, 0, 1, 1), "").is_err());
-        assert!(sam3_request(10, 10, DocRect::new(20, 20, 30, 30), "").is_err());
-    }
-
-    #[test]
     fn the_api_key_round_trips_and_a_blank_key_is_cleared() {
         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
         assert!(api_key(&app).is_empty());
         save_api_key(&mut app, "  secret-key  ");
         assert_eq!(api_key(&app), "secret-key");
-        let plan = {
-            app.run("file.new", json!({ "width": 32, "height": 24 })).unwrap();
-            app.run("select.rect", json!({ "x": 4, "y": 4, "width": 8, "height": 6 })).unwrap();
-            sam_plan(&app).unwrap()
-        };
-        let call = plan.expect("a saved key plans a SAM 3 call");
-        assert!(!call.body.to_string().contains("secret-key"));
         save_api_key(&mut app, "   ");
         assert!(api_key(&app).is_empty());
-        assert!(sam_plan(&app).unwrap().is_none());
+        assert!(!app.session.prefs().dialogs.contains_key(PREF));
     }
 
     fn harness() -> Harness<'static, PhotocraftApp> {
@@ -575,9 +546,10 @@ mod tests {
     }
 
     #[test]
-    fn generate_without_a_key_opens_the_gear_and_a_prompt_waits_for_upload() {
+    fn generate_without_a_key_opens_the_gear_and_a_prompt_is_sent() {
         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
         app.run("file.new", json!({ "width": 32, "height": 24 })).unwrap();
+        app.run("select.rect", json!({ "x": 4, "y": 4, "width": 8, "height": 6 })).unwrap();
         generate(&mut app);
         assert_eq!(app.ui.contextual.pop, Popover::Gear);
         assert!(app.ui.status_error);
@@ -587,8 +559,46 @@ mod tests {
         app.ui.contextual.prompt = "a red balloon".into();
         generate(&mut app);
         assert!(!app.ui.status_error);
-        assert!(app.ui.status.contains("uploaded"));
-        assert!(!app.ui.status.contains("secret-key"));
+        assert_eq!(app.ui.status, "Generating…");
+        let body = crate::generative::take_test_body().expect("a request body");
+        assert_eq!(body["prompt"], "a red balloon");
+        assert!(body["image_url"].as_str().unwrap().starts_with("data:image/png;base64,"));
+        assert!(body["mask_url"].as_str().unwrap().starts_with("data:image/png;base64,"));
+        assert!(!body.to_string().contains("secret-key"));
+        generate(&mut app);
+        assert!(app.ui.status.contains("still running"));
+    }
+
+    #[test]
+    fn results_put_the_pager_where_three_icons_were() {
+        let mut h = harness();
+        h.state_mut().run("select.rect", json!({ "x": 40, "y": 30, "width": 8, "height": 6 })).unwrap();
+        let doc_id = h.state().session.active().unwrap().doc.id;
+        let selection = h.state().session.active().unwrap().doc.selection.clone().unwrap();
+        let red = solid_png(8, 6, [255, 0, 0, 255]);
+        let blue = solid_png(8, 6, [0, 0, 255, 255]);
+        crate::generative::accept(h.state_mut(), vec![red, blue], doc_id, photocraft_geom::Rect::new(40, 30, 48, 36), selection).unwrap();
+        h.run_steps(4);
+        h.get_by_label("2/3");
+        assert!(h.query_by_label("Create mask from selection").is_none());
+        assert!(h.query_by_label("Fill selection").is_none());
+        assert!(h.query_by_label("Create new adjustment layer").is_none());
+        h.get_by_label("Next result").click();
+        h.run_steps(2);
+        h.get_by_label("3/3");
+        h.get_by_label("Previous result").click();
+        h.run_steps(2);
+        h.get_by_label("2/3");
+        h.get_by_label("More options").click();
+        h.run_steps(2);
+        h.get_by_label("Create mask from selection");
+    }
+
+    fn solid_png(w: u32, h: u32, px: [u8; 4]) -> Vec<u8> {
+        let n = (w as usize).saturating_mul(h as usize);
+        let rgba = px.repeat(n);
+        let image = photocraft_codecs::Image::from_u8(w, h, photocraft_codecs::ChannelLayout::Rgba, rgba).unwrap();
+        photocraft_codecs::encode(&image, photocraft_codecs::Format::Png, &Default::default()).unwrap()
     }
 
     #[test]

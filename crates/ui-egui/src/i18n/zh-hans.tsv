@@ -2091,8 +2091,13 @@ cameraRaw	Blending	混合
 	Modify selection	修改选区
 	More options	更多选项
 	Pin bar position	固定此栏位置
-	Remove the selected pixels. With a fal.ai key, SAM 3 segments the object first.	移除选中的像素。有 fal.ai 密钥时，先用 SAM 3 分割对象。
+	Removes the selected pixels with content-aware fill.	用内容识别填充移除选中的像素。
 	Reset bar position	重置此栏位置
 	Unpin bar position	取消固定此栏
 	fal.ai API key	fal.ai API 密钥
-	A fal.ai API key is used for Generative Fill, and to find the object in the selection before Remove. The key is stored only on this computer.	fal.ai API 密钥用于生成式填充，并在移除前找出选区中的对象。密钥只保存在这台电脑上。
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	fal.ai API 密钥用于生成式填充。密钥只保存在这台电脑上。
+	Generating with Generative Fill	正在使用生成式填充生成
+	The first image is your original. The next two are new versions of the selection.	第一张是原图。后面两张是选区的新版本。
+	The arrows on the bar move between the original and each generated image.	用任务栏上的箭头在原图和每张生成图之间切换。
+	Previous result	上一个结果
+	Next result	下一个结果
