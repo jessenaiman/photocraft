@@ -263,7 +263,7 @@ pub fn status_progress(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     ui.label(RichText::new(percent(&j)).color(t.text_dim).size(11.5).monospace());
     let (br, _) = ui.allocate_exact_size(vec2(bar_w, bar_h), Sense::hover());
     bar(ui, br, shown_fraction(&j), &t);
-    let label = if more > 0 { format!("{} (+{more})", j.label) } else { j.label.clone() };
+    let label = if more > 0 { format!("{} (+{more})", tl!(&j.label)) } else { tl!(&j.label).to_owned() };
     ui.label(RichText::new(label).color(t.text_dim).size(12.0));
     if xresp.clicked() {
         cancel(app, j.id);
@@ -283,7 +283,7 @@ pub fn dialog(app: &mut PhotocraftApp, ctx: &egui::Context) {
     // Photoshop doesn't dim the window behind its progress dialog either.
     let modal = egui::Modal::new(egui::Id::new("job-progress")).backdrop_color(Color32::from_black_alpha(36)).show(ctx, |ui| {
         ui.set_width(360.0);
-        ui.label(RichText::new(&j.label).font(crate::theme::semibold(15.0)));
+        ui.label(RichText::new(tl!(&j.label)).font(crate::theme::semibold(15.0)));
         ui.add_space(4.0);
         crate::widgets::hairline(ui);
         ui.add_space(10.0);

@@ -8,7 +8,7 @@
 //! - `engine.commands`: list commands with enablement
 //! - `ui.inspect`: full UI state (tool, panels, views, dialogs, windows, window size); the menu
 //!   tree is `ui.menu.list`
-//! - `ui.set {tool?, panels?, dock?, dockTabs?, dockWidth?, maskTarget?, vectorMaskTarget?, selectionMode?, zoom?, center?, fit?, theme?, brushSection?, brushTab?, brushesView?, brushSize?}`:
+//! - `ui.set {tool?, panels?, dock?, dockTabs?, dockWidth?, colorPanel?, maskTarget?, vectorMaskTarget?, selectionMode?, zoom?, center?, fit?, theme?, brushSection?, brushTab?, brushesView?, brushSize?}`:
 //!   change UI state; any other field is an error ([`UI_SET_FIELDS`])
 //! - `ui.menu.invoke {id, wait?}` / `ui.menu.list`: activate a menu item by id; list the menu tree
 //! - `ui.dialog.open {kind, fields?}` (kinds: newDocument, about, layerStyle {effect?}, colorPicker {target: foreground|background}, command {command}) / `ui.dialog.set {dialog, field, value}` / `ui.dialog.confirm {dialog, wait?}` / `ui.dialog.cancel {dialog}`
@@ -70,12 +70,13 @@ pub enum Outcome {
 
 /// The fields `ui.set` reads. Anything else is rejected before a field is applied, so a typo or
 /// a field the method doesn't have can't reply with success while nothing changes (#412).
-pub const UI_SET_FIELDS: [&str; 18] = [
+pub const UI_SET_FIELDS: [&str; 19] = [
     "tool",
     "panels",
     "dock",
     "dockTabs",
     "dockWidth",
+    "colorPanel",
     "maskTarget",
     "vectorMaskTarget",
     "selectionMode",
@@ -339,6 +340,13 @@ pub fn handle(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest
                     Err(e) => return err(e),
                 }
             }
+            // Which chip the Color panel edits.
+            if let Some(c) = p.get("colorPanel") {
+                match serde_json::from_value(c.clone()) {
+                    Ok(v) => app.ui.color_panel = v,
+                    Err(e) => return err(e),
+                }
+            }
             // Right dock width in points (clamped to the dock's 250..=520 range), applied next frame.
             if let Some(w) = p.get("dockWidth").and_then(Value::as_f64) {
                 crate::panels::request_dock_width(ctx, w as f32);
@@ -379,8 +387,10 @@ pub fn handle(app: &mut PhotocraftApp, ctx: &egui::Context, req: &ControlRequest
                     Err(e) => return err(format!("brushesView: {e} (list, grid)")),
                 }
             }
-            if let Some(size) = p.get("brushSize").and_then(Value::as_f64) {
-                app.session.tools.brush.size = size as f32;
+            if let Some(size) = p.get("brushSize").and_then(Value::as_f64)
+                && let Err(e) = app.run("tools.setBrush", json!({"brush": {"size": size}}))
+            {
+                return err(e);
             }
             ok(Value::Null)
         }
@@ -837,6 +847,16 @@ mod tests {
     }
 
     #[test]
+    fn ui_set_color_panel_picks_the_edited_chip() {
+        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
+        let ctx = egui::Context::default();
+        assert_eq!(call(&mut app, &ctx, "ui.set", json!({"colorPanel": {"background": true}}))["ok"], true);
+        assert!(app.ui.color_panel.background);
+        assert_eq!(call(&mut app, &ctx, "ui.set", json!({"colorPanel": {"background": "yes"}}))["ok"], false);
+        assert!(app.ui.color_panel.background, "a bad value changes nothing");
+    }
+
+    #[test]
     fn ui_set_unknown_theme_error_names_every_theme_and_each_name_works() {
         use crate::theme::ThemeKind;
         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
@@ -850,6 +870,37 @@ mod tests {
             assert_eq!(app.ui.theme, kind);
             assert_eq!(ThemeKind::from_name(kind.id()), Some(kind));
         }
+    }
+
+    #[test]
+    fn ui_set_brush_size_dispatches_a_journaled_brush_command() {
+        let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
+        let ctx = egui::Context::default();
+
+        let r = call(&mut app, &ctx, "ui.set", json!({"brushSize": 42.5}));
+        assert_eq!(r["ok"], true, "{r}");
+        assert_eq!(app.session.tools.brush.size, 42.5);
+        let (id, params) = app.session.journal.last().cloned().expect("brush change is journaled");
+        assert_eq!(id, "tools.setBrush");
+        assert_eq!(params, json!({"brush": {"size": 42.5}}));
+
+        // The control API has historically ignored non-numeric optional values.
+        for params in [json!({}), json!({"brushSize": null}), json!({"brushSize": "large"}), json!({"brushSize": true})] {
+            let journal_len = app.session.journal.len();
+            let r = call(&mut app, &ctx, "ui.set", params);
+            assert_eq!(r["ok"], true, "{r}");
+            assert_eq!(app.session.tools.brush.size, 42.5);
+            assert_eq!(app.session.journal.len(), journal_len);
+        }
+
+        // Values that cannot be represented by BrushSettings must report the command error and
+        // leave both the brush and journal unchanged instead of mutating tool state directly.
+        let journal_len = app.session.journal.len();
+        let r = call(&mut app, &ctx, "ui.set", json!({"brushSize": f64::MAX}));
+        assert_eq!(r["ok"], false, "{r}");
+        assert!(r["error"].as_str().is_some(), "{r}");
+        assert_eq!(app.session.tools.brush.size, 42.5);
+        assert_eq!(app.session.journal.len(), journal_len);
     }
 
     #[test]

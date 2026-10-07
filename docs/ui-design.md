@@ -72,6 +72,12 @@ size is unavailable, Auto follows system DPI. The fixed choices (75% to 300%) se
 scale, allowing large 4K displays to use smaller controls when desired. Canvas zoom shortcuts
 continue to control the document independently of UI scaling.
 
+Interface → UI Font Size changes interface text independently of UI Scale and canvas zoom.
+Tiny, Small (the default), Medium and Large use 10/12, 1, 14/12 and 16/12 of the theme's original
+font sizes, preserving the relative sizes of headings, captions and numeric fields. Apply or OK
+updates text immediately; the choice persists across launches and theme changes. CJK fallback
+fonts use the same size, including fonts loaded after the preference changes.
+
 ## Localisation
 
 Strings in code stay English and are the default lookup keys. `crates/ui-egui/src/i18n` maps them

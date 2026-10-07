@@ -99,7 +99,7 @@ fn dynamic(ui: &mut egui::Ui, id: &str, label: &str, d: &mut Dynamic, max: f32, 
 fn size_row(ui: &mut egui::Ui, label: &str, size: &mut f32, max: f32, restore: Option<f32>) {
     let t = Tokens::get(ui.ctx());
     ui.horizontal(|ui| {
-        ui.label(RichText::new(label).color(t.text_dim));
+        ui.label(RichText::new(tl!(label)).color(t.text_dim));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let mut s = *size;
             if widgets::value_field(ui, &mut s, 1.0..=max, "px", 74.0).changed() {

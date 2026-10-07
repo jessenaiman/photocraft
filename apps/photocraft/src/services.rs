@@ -26,6 +26,7 @@ const SAVE_FILTERS: &[(&str, &[&str])] = &[
     ("PhotoCraft", &["pcraft"]),
     ("PNG", &["png"]),
     ("JPEG", &["jpg"]),
+    ("WebP", &["webp"]),
     ("TIFF", &["tif"]),
     ("Targa", &["tga"]),
     ("OpenEXR", &["exr"]),
@@ -152,6 +153,7 @@ pub fn native(automation: Option<photocraft_automation::AuthorizedWorkspace>) ->
             if let Some(q) = settings.jpeg_quality {
                 opts.encode.jpeg_quality = q;
             }
+            opts.tiff_layers = settings.tiff_layers;
             crate::crash_guard::guard("Export", || photocraft_io::export(doc, path, &opts).map(|r| (r.bytes, r.warnings)).map_err(|e| e.to_string()))
         })),
         pick_open: Some(Box::new(|| {
@@ -159,6 +161,13 @@ pub fn native(automation: Option<photocraft_automation::AuthorizedWorkspace>) ->
             // A read failure goes back to the app, which reports it like any other open failure.
             let bytes = photocraft_format::read_file(&path).map_err(|e| e.to_string());
             Some((path.to_string_lossy().to_string(), bytes))
+        })),
+        pick_open_paths: Some(Box::new(|| {
+            rfd::FileDialog::new()
+                .add_filter("All Formats", OPEN_EXTS)
+                .add_filter("PhotoCraft", &["pcraft"])
+                .pick_files()
+                .map(|paths| paths.into_iter().map(|path| path.to_string_lossy().into_owned()).collect())
         })),
         pick_save: Some(Box::new(|suggested: &str| {
             let p = std::path::Path::new(suggested);
@@ -294,6 +303,14 @@ mod tests {
     use photocraft_format::list_recovery;
     use photocraft_ui_egui::{PhotocraftApp, prefs_ui};
     use serde_json::json;
+
+    /// "Export As" formats must lead with their own filter, or the save panel appends the first one's extension (`photo.webp.psd`).
+    #[test]
+    fn save_filters_lead_with_every_export_format() {
+        for ext in ["png", "jpg", "webp", "tif", "tga"] {
+            assert!(save_filters(&format!("photo.{ext}"))[0].1.contains(&ext), "{ext}");
+        }
+    }
 
     const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
     const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];

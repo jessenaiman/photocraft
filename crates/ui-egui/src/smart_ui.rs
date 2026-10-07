@@ -29,7 +29,7 @@ fn filter_label(f: &photocraft_doc::SmartFilter) -> String {
         return format!("{} (kept, not editable)", name.trim_end_matches("...").trim_end_matches('…'));
     }
     photocraft_engine::commands::find(command)
-        .map_or_else(|| command.rsplit('.').next().unwrap_or(command).to_string(), |c| c.label.trim_end_matches('…').to_string())
+        .map_or_else(|| command.rsplit('.').next().unwrap_or(command).to_string(), |c| tl!(c.label).trim_end_matches('…').to_string())
 }
 
 /// Smart Filters header + one row per filter (top filter first, as in Photoshop) under a smart

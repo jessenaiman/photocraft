@@ -590,7 +590,13 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
         painter.rect_filled(title, 0.0, t.dock);
         painter.line_segment([title.left_bottom(), title.right_bottom()], Stroke::new(1.0, t.separator));
         let pct = if d.zoom > 0.0 { d.zoom * 100.0 } else { 100.0 };
-        painter.text(title.center(), Align2::CENTER_CENTER, format!("Liquify ({}, {:.0}%)", d.layer_name, pct), FontId::proportional(13.0), t.text);
+        painter.text(
+            title.center(),
+            Align2::CENTER_CENTER,
+            format!("{} ({}, {:.0}%)", tl!("Liquify…").trim_end_matches('…'), d.layer_name, pct),
+            FontId::proportional(13.0),
+            t.text,
+        );
         let body = ERect::from_min_max(pos2(full.left(), title.bottom()), full.max);
         // Left tool strip.
         let left = ERect::from_min_size(body.min, vec2(LEFT_W, body.height()));
