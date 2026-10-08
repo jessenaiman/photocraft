@@ -40,6 +40,7 @@ pub mod cjk_fonts;
 pub mod color_picker_ui;
 pub mod color_range_ui;
 pub mod comps_ui;
+pub mod contextual_bar;
 pub mod control;
 pub mod crop_ui;
 pub mod dialogs;
@@ -55,6 +56,7 @@ pub mod file_ui;
 pub mod fill_ui;
 pub mod filter_dialog;
 pub mod gallery_ui;
+mod generative;
 pub mod gpu_canvas;
 pub mod gpu_status;
 pub mod gradient_ui;
@@ -437,6 +439,13 @@ pub struct PhotocraftApp {
     pub background_jobs: bool,
     /// Background job bookkeeping: opening tabs, control replies waiting on a job.
     pub jobs: jobs_ui::JobsUi,
+    /// In-flight Generative Fill call. Not saved with the workspace.
+    pub(crate) generative: Option<generative::Pending>,
+    /// Session-only credential: never serialized into preferences or UI state.
+    pub(crate) fal_key: String,
+    pub(crate) generative_discarded_request: bool,
+    /// Original plus the generated images for the current selection. Not saved.
+    pub(crate) variations: Option<generative::Variations>,
     #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
     live_tokens: theme::live::LiveTokens,
 }
@@ -520,6 +529,10 @@ impl PhotocraftApp {
             stylus: Default::default(),
             background_jobs: false,
             jobs: Default::default(),
+            generative: None,
+            fal_key: String::new(),
+            generative_discarded_request: false,
+            variations: None,
             #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
             live_tokens: theme::live::LiveTokens::from_env(),
         };
@@ -1054,6 +1067,9 @@ impl eframe::App for PhotocraftApp {
         egui::CentralPanel::default().frame(egui::Frame::NONE.fill(backdrop)).show(ui, |ui| {
             canvas::document_area(self, ui);
         });
+        generative::poll(self, &ctx);
+        contextual_bar::show(self, &ctx);
+        generative::loading(self, &ctx);
         panels::properties_window(self, &ctx);
         brush_panel::window(self, &ctx);
         preset_panels::windows(self, &ctx);

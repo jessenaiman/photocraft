@@ -46,6 +46,7 @@ pub const UI_COMMANDS: &[(&str, &str, &[&str], Option<&str>)] = &[
     ("window.toggle.navigator", "Navigator", &["Window"], None),
     ("window.toggle.toolbar", "Tools", &["Window"], None),
     ("window.toggle.options", "Options", &["Window"], None),
+    ("window.toggle.contextualTaskBar", "Contextual Task Bar", &["Window"], None),
     ("window.theme.toggle", "Next Theme", &["Window"], None),
     ("window.theme.pro", "Pro Theme", &["Window", "Theme"], None),
     ("window.theme.proMedium", "Pro Medium Gray Theme", &["Window", "Theme"], None),
@@ -431,6 +432,7 @@ pub(crate) fn invoke_unguarded(app: &mut PhotocraftApp, ctx: &egui::Context, id:
                 "toolbar" => &mut p.toolbar,
                 "options" => &mut p.options_bar,
                 "brushSettings" => &mut p.brush_settings,
+                "contextualTaskBar" => &mut p.contextual_bar,
                 _ => return Err(format!("unknown panel in {t}")),
             };
             *slot = !*slot;
@@ -589,6 +591,7 @@ fn checked(app: &PhotocraftApp, id: &str) -> Option<bool> {
         "window.toggle.toolbar" => p.toolbar,
         "window.toggle.options" => p.options_bar,
         "window.toggle.brushSettings" => p.brush_settings,
+        "window.toggle.contextualTaskBar" => p.contextual_bar,
         _ => return None,
     })
 }

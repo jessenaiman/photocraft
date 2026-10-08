@@ -2088,6 +2088,31 @@ cameraRaw	Color	Barvy
 	Don't show again	Příště nezobrazovat
 	Save failed: {error}	Uložení se nezdařilo: {error}
 	Save cancelled	Ukládání zrušeno
+	Contextual Task Bar	Kontextový panel úloh
+	Create mask from selection	Vytvořit masku z výběru
+	Create new adjustment layer	Vytvořit novou vrstvu úprav
+	Describe what to generate in the selection.	Popište, co se má ve výběru vygenerovat.
+	Drag to move the bar	Přetažením posunete panel
+	Fill selection	Vyplnit výběr
+	Generative Fill	Generativní výplň
+	Generative fill settings	Nastavení generativní výplně
+	Get a fal.ai key	Získat klíč fal.ai
+	Hide bar	Skrýt panel
+	Invert selection	Invertovat výběr
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	Upravte stávající obsah, rozšiřte obraz a generujte objekty, pozadí a scény.
+	Modify selection	Upravit výběr
+	More options	Další volby
+	Pin bar position	Připnout polohu panelu
+	Removes the selected pixels with content-aware fill.	Odstraní vybrané pixely výplní podle obsahu.
+	Reset bar position	Obnovit polohu panelu
+	Unpin bar position	Odepnout panel
+	fal.ai API key	Klíč API fal.ai
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Klíč API fal.ai slouží ke generativní výplni. Klíč zůstane jen v tomto počítači.
+	Generating with Generative Fill	Generování pomocí generativní výplně
+	The first image is your original. The next two are new versions of the selection.	První obrázek je původní. Další dva jsou nové verze výběru.
+	The arrows on the bar move between the original and each generated image.	Šipky na liště přepínají mezi původním obrázkem a každým vygenerovaným.
+	Previous result	Předchozí výsledek
+	Next result	Další výsledek
 	Couldn't place {name}: {error}	Nelze umístit {name}: {error}
 	Magnetic Lasso Tool	Nástroj magnetické laso
 	Frequency	Frekvence

@@ -2067,6 +2067,31 @@ cameraRaw	Blending	混合
 	Don't show again	不再顯示
 	Save failed: {error}	儲存失敗：{error}
 	Save cancelled	已取消儲存
+	Contextual Task Bar	相關工作列
+	Create mask from selection	從選取範圍建立遮色片
+	Create new adjustment layer	建立新調整圖層
+	Describe what to generate in the selection.	描述要在選取範圍中生成的內容。
+	Drag to move the bar	拖曳以移動此列
+	Fill selection	填滿選取範圍
+	Generative Fill	生成填色
+	Generative fill settings	生成填色設定
+	Get a fal.ai key	取得 fal.ai 金鑰
+	Hide bar	隱藏此列
+	Invert selection	反向選取
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	修改現有內容、延伸影像，並產生物件、背景與場景。
+	Modify selection	修改選取範圍
+	More options	更多選項
+	Pin bar position	釘選此列位置
+	Removes the selected pixels with content-aware fill.	以內容感知填色移除選取的像素。
+	Reset bar position	重設此列位置
+	Unpin bar position	取消釘選此列
+	fal.ai API key	fal.ai API 金鑰
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	fal.ai API 金鑰用於生成填色。金鑰只保存在這台電腦上。
+	Generating with Generative Fill	正在使用生成填色產生
+	The first image is your original. The next two are new versions of the selection.	第一張是原圖。後面兩張是選取範圍的新版本。
+	The arrows on the bar move between the original and each generated image.	用工作列上的箭頭在原圖和每張生成圖之間切換。
+	Previous result	上一個結果
+	Next result	下一個結果
 	Magnetic Lasso Tool	磁性套索工具
 	Frequency	頻率
 	Use tablet pressure to change pen width	使用繪圖板壓力以變更鋼筆寬度

@@ -2073,6 +2073,31 @@ cameraRaw	Color	カラー
 	Don't show again	次回から表示しない
 	Save failed: {error}	保存に失敗しました: {error}
 	Save cancelled	保存をキャンセルしました
+	Contextual Task Bar	コンテキストタスクバー
+	Create mask from selection	選択範囲からマスクを作成
+	Create new adjustment layer	新規調整レイヤーを作成
+	Describe what to generate in the selection.	選択範囲に生成する内容を書いてください。
+	Drag to move the bar	ドラッグしてバーを移動
+	Fill selection	選択範囲を塗りつぶす
+	Generative Fill	生成塗りつぶし
+	Generative fill settings	生成塗りつぶしの設定
+	Get a fal.ai key	fal.ai のキーを取得
+	Hide bar	バーを隠す
+	Invert selection	選択範囲を反転
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	既存の内容を変え、画像を広げ、オブジェクト・背景・場面を生成します。
+	Modify selection	選択範囲を修正
+	More options	その他のオプション
+	Pin bar position	バーの位置を固定
+	Removes the selected pixels with content-aware fill.	コンテンツに応じた塗りつぶしで、選択したピクセルを消します。
+	Reset bar position	バーの位置をリセット
+	Unpin bar position	バーの固定を解除
+	fal.ai API key	fal.ai API キー
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	fal.ai の API キーは生成塗りつぶしに使います。キーはこのコンピューターだけに保存されます。
+	Generating with Generative Fill	生成塗りつぶしで生成しています
+	The first image is your original. The next two are new versions of the selection.	1枚目は元の画像です。続く2枚は、選択範囲の新しいバージョンです。
+	The arrows on the bar move between the original and each generated image.	バーの矢印で、元の画像と生成した画像を切り替えられます。
+	Previous result	前の結果
+	Next result	次の結果
 	Magnetic Lasso Tool	マグネット選択ツール
 	Frequency	頻度
 	Use tablet pressure to change pen width	タブレットの筆圧を使用してペンの幅を変更

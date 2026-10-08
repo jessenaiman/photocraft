@@ -2162,6 +2162,31 @@ cameraRaw	Amount	Cantidad
 	Don't show again	No volver a mostrar
 	Save failed: {error}	Error al guardar: {error}
 	Save cancelled	Guardado cancelado
+	Contextual Task Bar	Barra de tareas contextual
+	Create mask from selection	Crear máscara desde la selección
+	Create new adjustment layer	Crear nueva capa de ajuste
+	Describe what to generate in the selection.	Describa qué generar en la selección.
+	Drag to move the bar	Arrastre para mover la barra
+	Fill selection	Rellenar selección
+	Generative Fill	Relleno generativo
+	Generative fill settings	Ajustes del relleno generativo
+	Get a fal.ai key	Obtener una clave de fal.ai
+	Hide bar	Ocultar barra
+	Invert selection	Invertir selección
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	Modifique el contenido, amplíe la imagen y genere objetos, fondos y escenas.
+	Modify selection	Modificar selección
+	More options	Más opciones
+	Pin bar position	Fijar la posición de la barra
+	Removes the selected pixels with content-aware fill.	Quita los píxeles seleccionados con relleno según el contenido.
+	Reset bar position	Restablecer la posición de la barra
+	Unpin bar position	Soltar la posición de la barra
+	fal.ai API key	Clave de API de fal.ai
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Una clave de API de fal.ai se usa para el relleno generativo. La clave se guarda solo en este ordenador.
+	Generating with Generative Fill	Generando con relleno generativo
+	The first image is your original. The next two are new versions of the selection.	La primera imagen es la original. Las dos siguientes son versiones nuevas de la selección.
+	The arrows on the bar move between the original and each generated image.	Las flechas de la barra pasan de la imagen original a cada imagen generada.
+	Previous result	Resultado anterior
+	Next result	Resultado siguiente
 	Magnetic Lasso Tool	Herramienta Lazo magnético
 	Frequency	Frecuencia
 	Use tablet pressure to change pen width	Usar la presión de la tableta para cambiar la anchura del lápiz

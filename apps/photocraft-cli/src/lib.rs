@@ -29,6 +29,8 @@ USAGE:
       --in folder is refused, as the results would replace the originals; --in-place allows it.
   photocraft-cli droplet <file.pcdroplet> <file-or-dir>… [--out <dir>]
       Run a droplet (File › Automate › Create Droplet) on images and folders.
+  photocraft-cli control <method> --bridge <127.0.0.1:port> [--params <json>] [--control-token-file <path>]
+      Call the running native app through the same authenticated BridgeClient as MCP.
   photocraft-cli commands [--json] [--filter <text>]
       List the engine command registry.
   photocraft-cli mcp [--bridge <127.0.0.1:port>] [--control-token <64-hex> | --control-token-file <path>]
@@ -60,6 +62,7 @@ struct Subcommand {
 }
 
 const SUBCOMMANDS: &[Subcommand] = &[
+    Subcommand { name: "control", values: &["--bridge", "--params", "--control-token", "--control-token-file"], bare: &[], run: |a, out, _| control(a, out) },
     Subcommand { name: "convert", values: &["--format", "--quality"], bare: &["--tiff-layers"], run: convert },
     Subcommand { name: "info", values: &[], bare: &["--compact"], run: |a, out, _| info(a, out) },
     Subcommand { name: "run", values: &["--new", "--cmd", "--params", "--out", "--format", "--quality"], bare: &["--tiff-layers"], run: run_cmds },
@@ -411,6 +414,21 @@ fn serve(a: &Args, err: &mut dyn Write) -> R {
             photocraft_automation::rpc::serve_lines(&h, stdin.lock(), std::io::stdout()).map_err(|e| e.to_string())
         }
     }
+}
+
+fn control(a: &Args, out: &mut dyn Write) -> R {
+    let [method] = a.positional.as_slice() else { return Err("control needs exactly one method".into()) };
+    let addr = a.get("--bridge").ok_or("control requires --bridge <127.0.0.1:port>")?;
+    let params: Value = serde_json::from_str(a.get("--params").unwrap_or("{}")).map_err(|_| "control --params must be valid JSON".to_string())?;
+    if !params.is_object() {
+        return Err("control --params must be a JSON object".into());
+    }
+    let (supplied, token_file) = security::token_inputs(a.get("--control-token").map(str::to_owned), a.get("--control-token-file").map(PathBuf::from));
+    let token = security::client_token(supplied.as_deref(), token_file.as_deref()).map_err(|e| e.to_string())?;
+    let client = photocraft_automation::bridge::BridgeClient::new(addr, token).map_err(|e| e.to_string())?;
+    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().map_err(|e| e.to_string())?;
+    let value = rt.block_on(client.call(method, params)).map_err(|e| e.to_string())?;
+    print_json(out, &value, false)
 }
 
 fn mcp(a: &Args) -> R {

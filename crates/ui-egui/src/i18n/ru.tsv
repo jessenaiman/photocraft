@@ -2364,6 +2364,31 @@ cameraRaw	Roughness	Неровность
 	Don't show again	Больше не показывать
 	Save failed: {error}	Не удалось сохранить: {error}
 	Save cancelled	Сохранение отменено
+	Contextual Task Bar	Контекстная панель задач
+	Create mask from selection	Создать маску из выделения
+	Create new adjustment layer	Создать новый корректирующий слой
+	Describe what to generate in the selection.	Опишите, что создать в выделении.
+	Drag to move the bar	Перетащите, чтобы переместить панель
+	Fill selection	Залить выделение
+	Generative Fill	Генеративная заливка
+	Generative fill settings	Настройки генеративной заливки
+	Get a fal.ai key	Получить ключ fal.ai
+	Hide bar	Скрыть панель
+	Invert selection	Инвертировать выделение
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	Меняйте существующее, расширяйте изображение и создавайте объекты, фоны и сцены.
+	Modify selection	Изменить выделение
+	More options	Другие параметры
+	Pin bar position	Закрепить положение панели
+	Removes the selected pixels with content-aware fill.	Удаляет выделенные пиксели с помощью заливки с учётом содержимого.
+	Reset bar position	Сбросить положение панели
+	Unpin bar position	Открепить панель
+	fal.ai API key	Ключ API fal.ai
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Ключ API fal.ai нужен для генеративной заливки. Ключ хранится только на этом компьютере.
+	Generating with Generative Fill	Генерация с помощью генеративной заливки
+	The first image is your original. The next two are new versions of the selection.	Первое изображение — исходное. Два следующих — новые версии выделения.
+	The arrows on the bar move between the original and each generated image.	Стрелки на панели переключают исходное изображение и каждый сгенерированный вариант.
+	Previous result	Предыдущий результат
+	Next result	Следующий результат
 	Couldn't place {name}: {error}	Не удалось поместить {name}: {error}
 	Magnetic Lasso Tool	Магнитное лассо
 	Frequency	Частота

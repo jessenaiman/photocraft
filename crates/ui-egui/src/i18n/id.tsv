@@ -2508,6 +2508,32 @@ cameraRaw	Blending	Pembauran
 	Don't show again	Jangan tampilkan lagi
 	Save failed: {error}	Gagal menyimpan: {error}
 	Save cancelled	Penyimpanan dibatalkan
+# Contextual task bar
+	Contextual Task Bar	Bilah Tugas Kontekstual
+	Create mask from selection	Buat mask dari seleksi
+	Create new adjustment layer	Buat layer penyesuaian baru
+	Describe what to generate in the selection.	Jelaskan apa yang akan dibuat di seleksi.
+	Drag to move the bar	Seret untuk memindahkan bilah
+	Fill selection	Isi seleksi
+	Generative Fill	Isi Generatif
+	Generative fill settings	Pengaturan isi generatif
+	Get a fal.ai key	Dapatkan kunci fal.ai
+	Hide bar	Sembunyikan bilah
+	Invert selection	Balikkan seleksi
+	Modify existing content, extend images, and generate objects, backgrounds and scenes.	Ubah konten yang ada, perluas gambar, dan buat objek, latar, serta adegan.
+	Modify selection	Ubah seleksi
+	More options	Opsi lainnya
+	Pin bar position	Sematkan posisi bilah
+	Removes the selected pixels with content-aware fill.	Menghapus piksel terpilih dengan isi sesuai konten.
+	Reset bar position	Atur ulang posisi bilah
+	Unpin bar position	Lepas sematan posisi bilah
+	fal.ai API key	Kunci API fal.ai
+	A fal.ai API key is used for Generative Fill. The key is stored only on this computer.	Kunci API fal.ai dipakai untuk Isi Generatif. Kunci hanya disimpan di komputer ini.
+	Generating with Generative Fill	Membuat dengan Isi Generatif
+	The first image is your original. The next two are new versions of the selection.	Gambar pertama adalah gambar asli. Dua gambar berikutnya adalah versi baru dari seleksi.
+	The arrows on the bar move between the original and each generated image.	Panah pada bilah berpindah antara gambar asli dan setiap gambar yang dibuat.
+	Previous result	Hasil sebelumnya
+	Next result	Hasil berikutnya
 	Couldn't place {name}: {error}	Tidak dapat menempatkan {name}: {error}
 	Magnetic Lasso Tool	Alat Magnetic Lasso
 	Frequency	Frekuensi
