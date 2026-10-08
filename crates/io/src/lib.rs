@@ -98,6 +98,19 @@ pub struct ExportResult {
     pub warnings: Vec<String>,
 }
 
+/// Which part of the document's XMP packet a flat export embeds. Layered saves (PSD, PSB,
+/// `.pcraft`) always keep everything. Save As and conversions keep the whole packet, as
+/// Photoshop's Save As does; Export As starts at `None`, because the packet lists the text of
+/// every type layer and one id per placed document (#647).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum XmpEmbed {
+    /// Embed the document's whole XMP packet.
+    #[default]
+    All,
+    /// Embed no XMP.
+    None,
+}
+
 /// Export options.
 #[derive(Debug, Clone)]
 pub struct ExportOptions {
@@ -105,14 +118,19 @@ pub struct ExportOptions {
     pub encode: EncodeOptions,
     /// Write PSB even for `.psd` names when the document is small.
     pub force_psb: bool,
-    /// TIFF: keep the layers (Photoshop layer data in tag 37724). `false` is Photoshop's
-    /// "Discard Layers and Save a Copy": a flat TIFF.
+    /// TIFF: keep the layers (Photoshop layer data in tag 37724). Off by default, so scripted
+    /// and agent saves (CLI, batch, MCP) write a flat TIFF unless they ask for layers; the app's
+    /// Save As sets it from its Layers option, which keeps them as Photoshop does. `false` is
+    /// Photoshop's "Discard Layers and Save a Copy".
     pub tiff_layers: bool,
+    /// Which part of the document's XMP packet a flat export embeds (PSD/PSB/`.pcraft`
+    /// always keep everything). Everything by default, as Save As does; Export As offers None.
+    pub xmp: XmpEmbed,
 }
 
 impl Default for ExportOptions {
     fn default() -> Self {
-        ExportOptions { encode: EncodeOptions::default(), force_psb: false, tiff_layers: true }
+        ExportOptions { encode: EncodeOptions::default(), force_psb: false, tiff_layers: false, xmp: XmpEmbed::All }
     }
 }
 
@@ -144,6 +162,11 @@ fn import_stages(name: &str, bytes: &[u8], ctl: &photocraft_raster::Interrupt) -
     }
     if is_psd(bytes) {
         let file = PsdFile::from_bytes(bytes)?;
+        // Nesting past the document model's cap could never be saved (.pcraft refuses it) and
+        // would overflow the importer's recursion; reject the file with the actionable limit.
+        if psd_import::group_depth(&file) > photocraft_doc::MAX_GROUP_DEPTH {
+            return Err(IoError::Unsupported(format!("layer groups nested deeper than {}", photocraft_doc::MAX_GROUP_DEPTH)));
+        }
         ctl.check().map_err(|_| IoError::Cancelled)?;
         ctl.progress(0.05);
         let (mut document, warnings) = psd_import::psd_to_document_with(&file, ctl).ok_or(IoError::Cancelled)?;

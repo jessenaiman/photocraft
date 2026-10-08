@@ -10,7 +10,7 @@ use photocraft_doc::{Document, Layer, LayerContent, LayerId};
 use photocraft_geom::Rect;
 use serde_json::{Value, json};
 
-use crate::commands::{CommandSpec, int};
+use crate::commands::{CommandSpec, int_i32};
 use crate::{DocState, EngineError, Result, Session};
 
 // ---------- selection state ----------
@@ -237,8 +237,8 @@ pub(crate) fn move_layers(doc: &mut Document, moves: &[(LayerId, i32, i32)]) -> 
 
 /// `layer.translate`: the explicit layer, or every selected layer, plus their linked layers.
 pub fn translate(s: &mut Session, p: &Value) -> Result<Value> {
-    let dx = int(p, "dx").unwrap_or(0) as i32;
-    let dy = int(p, "dy").unwrap_or(0) as i32;
+    let dx = int_i32("layer.translate", p, "dx")?.unwrap_or(0);
+    let dy = int_i32("layer.translate", p, "dy")?.unwrap_or(0);
     if dx == 0 && dy == 0 {
         return Ok(Value::Null);
     }
@@ -612,6 +612,16 @@ fn reverse(s: &mut Session) -> Result<Value> {
     Ok(Value::Null)
 }
 
+/// Refuses an edit that left `doc` nested deeper than [`photocraft_doc::MAX_GROUP_DEPTH`]
+/// groups. Called at the end of a `Session::edit` closure, so an `Err` leaves the document and
+/// history untouched.
+pub(crate) fn check_group_depth(doc: &Document, what: &str) -> Result<()> {
+    if doc.max_group_depth() > photocraft_doc::MAX_GROUP_DEPTH {
+        return Err(EngineError::Other(format!("{what} would nest layers deeper than {} groups", photocraft_doc::MAX_GROUP_DEPTH)));
+    }
+    Ok(())
+}
+
 /// Group Layers (⌘G) / Group from Layers: the explicit layer, or every selected layer, moves
 /// into a new group placed where the top-most of them was. Bottom-to-top order is preserved.
 pub fn group_layers(s: &mut Session, p: &Value) -> Result<Value> {
@@ -633,6 +643,7 @@ pub fn group_layers(s: &mut Session, p: &Value) -> Result<Value> {
             children.push(doc.remove(*id).ok_or(EngineError::NoLayer(*id))?);
         }
         *doc.layer_mut(gid).and_then(Layer::children_mut).ok_or(EngineError::NoLayer(gid))? = children;
+        check_group_depth(doc, "Group Layers")?;
         *active = Some(gid);
         Ok(gid)
     })?;
@@ -1133,6 +1144,24 @@ mod tests {
     }
 
     #[test]
+    fn grouping_is_capped_at_the_document_nesting_limit() {
+        let mut s = session(8);
+        let a = rect_layer(&mut s, Rect::new(0, 0, 5, 5));
+        select_all(&mut s, &[a]);
+        for _ in 0..photocraft_doc::MAX_GROUP_DEPTH {
+            s.execute("layer.groupLayers", json!({})).unwrap();
+        }
+        assert_eq!(doc(&s).max_group_depth(), photocraft_doc::MAX_GROUP_DEPTH);
+        // One more wrapping group would pass the cap: rejected, document untouched.
+        let err = s.execute("layer.groupLayers", json!({})).unwrap_err();
+        assert!(err.to_string().contains("deeper than 100"), "{err}");
+        assert_eq!(doc(&s).max_group_depth(), photocraft_doc::MAX_GROUP_DEPTH);
+        // The rejected call recorded no history step: undo still lands one grouping earlier.
+        s.undo();
+        assert_eq!(doc(&s).max_group_depth(), photocraft_doc::MAX_GROUP_DEPTH - 1);
+    }
+
+    #[test]
     fn select_linked_layers_excludes_an_unlinked_active_layer() {
         for depth in [8, 16, 32] {
             let mut s = session(depth);
@@ -1202,6 +1231,21 @@ mod tests {
         assert!(!s.is_enabled("layer.selectLinkedLayers"));
         assert!(s.execute("layer.selectLinkedLayers", json!({})).is_err());
         assert_eq!(sel(&s), before);
+    }
+
+    #[test]
+    fn translate_rejects_offsets_that_would_wrap() {
+        let mut s = session(8);
+        let a = rect_layer(&mut s, Rect::new(0, 0, 5, 5));
+        select_all(&mut s, &[a]);
+        // 2^32 + 50 wrapped to `dx = 50` and 3e9 to a negative offset through `as i32`.
+        for dx in [4_294_967_346_i64, 3_000_000_000_i64] {
+            let err = s.execute("layer.translate", json!({"dx": dx, "dy": 0})).unwrap_err();
+            assert!(err.to_string().contains("32-bit"), "{err}");
+        }
+        assert_eq!(bounds(&s, a), Rect::new(0, 0, 5, 5), "the layer never moved");
+        // Large in-range offsets still work.
+        s.execute("layer.translate", json!({"dx": -200_000, "dy": 200_000})).unwrap();
     }
 
     #[test]
